@@ -1,52 +1,30 @@
 # Databricks notebook source
-# MAGIC %md 
-# MAGIC title: End-to-End MLOps demo with MLFlow, Feature Store and Auto ML, part 0 - Setup
+# MAGIC %md
+# MAGIC # Streamlining ML Operations Using Databricks
 # MAGIC 
-# MAGIC authors:
-# MAGIC - Rafi Kurlansik
-# MAGIC 
-# MAGIC edits:
-# MAGIC - Stephanie Rivera
-# MAGIC 
-# MAGIC tags:
-# MAGIC - python
-# MAGIC - telco
-# MAGIC - csv
-# MAGIC - delta
-# MAGIC 
-# MAGIC created_at: 2021-05-01
-# MAGIC 
-# MAGIC updated_at: 2021-08-03
-# MAGIC 
-# MAGIC tldr: End-to-end demo of Databricks for MLOps, including MLflow, the registry, webhooks, scoring, feature store and auto ML. Part 0 - setup of data and Delta table
+# MAGIC ##Step 0a - Data Setup and ETL
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC # Notebook Links
-# MAGIC - AWS demo.cloud: [https://demo.cloud.databricks.com/#notebook/10166850](https://demo.cloud.databricks.com/#notebook/10166850)
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC ### Setup
+# MAGIC ### Data Setup
 # MAGIC 
 # MAGIC In this case we'll grab a CSV from the web, but we could also use Python or Spark to read data from databases or cloud storage.
 
 # COMMAND ----------
 
 # MAGIC %sh
-# MAGIC wget https://raw.githubusercontent.com/IBM/telco-customer-churn-on-icp4d/master/data/Telco-Customer-Churn.csv
+# MAGIC wget https://raw.githubusercontent.com/IBM/telco-customer-churn-on-icp4d/master/data/Telco-Customer-Churn.csv -P /databricks/driver/
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ### Load into Delta Lake
+# MAGIC ### Load Customer Churn Data into Lake
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC #### Path configs
+# MAGIC #### Define Config
 
 # COMMAND ----------
 
@@ -58,7 +36,7 @@ from pyspark.sql.functions import col, when
 from pyspark.sql.types import StructType,StructField,DoubleType, StringType, IntegerType, FloatType
 
 # Set config for database name, file paths, and table names
-database_name = 'sr_ibm_telco_churn'
+database_name = 'telco_churn'
 
 # Move file from driver to DBFS
 user = dbutils.notebook.entry_point.getDbutils().notebook().getContext().tags().apply('user')
@@ -89,7 +67,7 @@ shutil.rmtree('/dbfs'+telco_preds_path, ignore_errors=True)
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC #### Read and display
+# MAGIC #### Read Raw Source and Write to Bronze Table
 
 # COMMAND ----------
 
@@ -124,12 +102,10 @@ bronze_df = spark.read.format('csv').schema(schema).option('header','true')\
 
 bronze_df.write.format('delta').mode('overwrite').save(bronze_tbl_path)
 
-display(bronze_df)
-
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC #### Create bronze
+# MAGIC #### Create Table Definition
 
 # COMMAND ----------
 
@@ -142,4 +118,12 @@ _ = spark.sql('''
 
 # COMMAND ----------
 
+# MAGIC %md
+# MAGIC #### Display Data
 
+# COMMAND ----------
+
+display(spark.sql('''
+  SELECT *
+  FROM `{}`.{}
+  '''.format(database_name,bronze_tbl_name)))

@@ -1,8 +1,14 @@
 # Databricks notebook source
 # MAGIC %md
-# MAGIC ### Managing the model lifecycle with Model Registry
+# MAGIC # Streamlining ML Operations Using Databricks
 # MAGIC 
-# MAGIC <img src="https://github.com/RafiKurlansik/laughing-garbanzo/blob/main/step4.png?raw=true">
+# MAGIC ##Step 4 - Managing the Model Lifecycle w/ Model Registry
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
+# MAGIC <img src="https://github.com/RafiKurlansik/laughing-garbanzo/blob/main/step4.png?raw=true" width="1400" height="2800">
 # MAGIC 
 # MAGIC One of the primary challenges among data scientists and ML engineers is the absence of a central repository for models, their versions, and the means to manage them throughout their lifecycle.  
 # MAGIC 
@@ -30,7 +36,7 @@
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC #### Promote to Registry
+# MAGIC ### Promote to Registry
 # MAGIC ```
 # MAGIC model_name = "Example"
 # MAGIC 
@@ -40,16 +46,21 @@
 
 # COMMAND ----------
 
+# MAGIC %md
+# MAGIC #### Get Model using Experiment Run ID
+
+# COMMAND ----------
+
 import mlflow
 from mlflow.tracking import MlflowClient
 
 client = MlflowClient()
 
-run_id = '31966ccca92b4499b6a1bb9073c71999' # replace with your own run ID, etc
-model_name = "rk_churn"
+run_id = '30b000161b7543f88a92ea27b343f723' # replace with your own run ID, etc
+model_name = "uz_telco_churn"
 model_uri = f"runs:/{run_id}/model"
 
-client.set_tag(run_id, key='db_table', value='sr_ibm_telco_churn.churn_features')
+client.set_tag(run_id, key='db_table', value='telco_churn.churn_features')
 client.set_tag(run_id, key='demographic_vars', value='seniorCitizen,gender_Female')
 
 model_details = mlflow.register_model(model_uri, model_name)
@@ -73,19 +84,21 @@ model_version_details = client.get_model_version(name=model_name, version=model_
 
 client.update_registered_model(
   name=model_details.name,
-  description="This model predicts whether a customer will churn using features from the sr_ibm_telco_churn database.  It is used to update the Telco Churn Dashboard in DB SQL."
+  description="This model predicts whether a customer will churn using features from the telco_churn database.  It is used to update the Telco Churn Dashboard in DB SQL."
 )
 
 client.update_model_version(
   name=model_details.name,
   version=model_details.version,
-  description="This model version was built using XGBoost. Eating too much cake is the sin of gluttony. However, eating too much pie is okay because the sin of pie is always zero."
+  description="This model version was built using Decision Tree. Based on the loss metric, this is the best model and ready to be deployed for testing."
 )
 
 # COMMAND ----------
 
 # MAGIC %md
 # MAGIC #### Request Transition to Staging
+# MAGIC 
+# MAGIC This will kick off validation job
 # MAGIC 
 # MAGIC <!--<img src="https://github.com/RafiKurlansik/laughing-garbanzo/blob/main/webhooks2.png?raw=true" width = 800> -->
 
@@ -114,7 +127,7 @@ def mlflow_call_endpoint(endpoint, method, body='{}'):
 
 # COMMAND ----------
 
-# DBTITLE 1,Transition request triggers testing job 
+# DBTITLE 0,Transition request triggers testing job 
 # Transition request to staging
 staging_request = {'name': model_name,
                    'version': model_details.version,
@@ -125,12 +138,12 @@ mlflow_call_endpoint('transition-requests/create', 'POST', json.dumps(staging_re
 
 # COMMAND ----------
 
-# DBTITLE 1,This comment appears in model registry
-# Leave a comment for the ML engineer who will be reviewing the tests
-comment = "This was the best model from AutoML, I think we can use it as a baseline."
-comment_body = {'name': model_name, 'version': model_details.version, 'comment': comment}
-mlflow_call_endpoint('comments/create', 'POST', json.dumps(comment_body))
+#### Leave a comment for the ML Engineer in the Model Registry
 
 # COMMAND ----------
 
-
+# DBTITLE 0,This comment appears in model registry
+# Leave a comment for the ML engineer who will be reviewing the tests
+comment = "This was the best model based on my analysis, I think we can use it as a baseline."
+comment_body = {'name': model_name, 'version': model_details.version, 'comment': comment}
+mlflow_call_endpoint('comments/create', 'POST', json.dumps(comment_body))

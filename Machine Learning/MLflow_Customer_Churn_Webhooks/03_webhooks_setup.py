@@ -1,8 +1,13 @@
 # Databricks notebook source
 # MAGIC %md
-# MAGIC ## Model Registry Webhooks
+# MAGIC # Streamlining ML Operations Using Databricks
 # MAGIC 
-# MAGIC <img src="https://github.com/RafiKurlansik/laughing-garbanzo/blob/main/step3.png?raw=true">
+# MAGIC ##Step 3 - Model Registry Webhooks
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC <img src="https://github.com/RafiKurlansik/laughing-garbanzo/blob/main/step3.png?raw=true" width="1400" height="2800">
 # MAGIC 
 # MAGIC ### Supported Events
 # MAGIC * Registered model created
@@ -68,7 +73,7 @@ def mlflow_call_endpoint(endpoint, method, body='{}'):
 # COMMAND ----------
 
 # Which model in the registry will we create a webhook for?
-model_name = "rk_churn"
+model_name = "uz_telco_churn"
 
 trigger_job = json.dumps({
   "model_name": model_name,
@@ -76,7 +81,7 @@ trigger_job = json.dumps({
   "description": "Trigger the ops_validation job when a model is requested to move to staging.",
   "status": "ACTIVE",
   "job_spec": {
-    "job_id": "80010",    # This is our 05_ops_validation notebook
+    "job_id": "87359",    # This is our 05_ops_validation notebook
     "workspace_url": host,
     "access_token": token
   }
@@ -157,7 +162,7 @@ mlflow_call_endpoint("registry-webhooks/create", method = "POST", body = trigger
 # DBTITLE 1,List active webhooks
 import urllib 
 import json 
-model_name = "rk_churn"
+model_name = "uz_telco_churn"
 list_model_webhooks = json.dumps({"model_name": model_name})
 
 mlflow_call_endpoint("registry-webhooks/list", method = "GET", body = list_model_webhooks)

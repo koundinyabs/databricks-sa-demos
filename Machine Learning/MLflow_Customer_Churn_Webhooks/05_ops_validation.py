@@ -1,8 +1,14 @@
 # Databricks notebook source
 # MAGIC %md
-# MAGIC ## Model Tests
+# MAGIC # Streamlining ML Operations Using Databricks
 # MAGIC 
-# MAGIC <img src="https://github.com/RafiKurlansik/laughing-garbanzo/blob/main/step5.png?raw=true">
+# MAGIC ##Step 5 - Testing & Validation
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
+# MAGIC <img src="https://github.com/RafiKurlansik/laughing-garbanzo/blob/main/step5.png?raw=true" width="1400" height="2800">
 
 # COMMAND ----------
 
@@ -26,7 +32,7 @@ try:
   if 'to_stage' in registry_event and registry_event['to_stage'] != 'Staging':
     dbutils.notebook.exit()
 except Exception:
-  model_name = 'rk_churn'
+  model_name = 'uz_telco_churn'
   model_version = "1"
 print(model_name, model_version)
 
@@ -42,9 +48,11 @@ run_info = client.get_run(run_id=model_details.run_id)
 
 # COMMAND ----------
 
-# Read from feature store prod table?
+# Features can be read from the feature store or another source
 data_source = run_info.data.tags['db_table']
-features = fs.read_table(data_source)
+#features = fs.read_table(data_source)
+features = spark.table("telco_churn.churn_features").drop("customerID")
+
 
 # Load model as a Spark UDF
 model_uri = f'models:/{model_name}/{model_version}'
@@ -182,6 +190,8 @@ results.tags
 
 # COMMAND ----------
 
+'''
+
 import requests, json
 
 slack_message = "Registered model '{}' version {} baseline test results: {}".format(model_name, model_version, results.tags)
@@ -196,7 +206,9 @@ if response.status_code != 200:
     raise ValueError(
         'Request to slack returned an error %s, the response is:\n%s'
         % (response.status_code, response.text)
-)
+) 
+
+'''
 
 # COMMAND ----------
 
@@ -248,7 +260,3 @@ else:
                           'comment': 'All tests passed!  Moving to staging.'}
   
   mlflow_call_endpoint('transition-requests/approve', 'POST', json.dumps(approve_request_body))
-
-# COMMAND ----------
-
-

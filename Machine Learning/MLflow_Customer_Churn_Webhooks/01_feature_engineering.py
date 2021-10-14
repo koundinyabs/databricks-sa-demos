@@ -1,8 +1,14 @@
 # Databricks notebook source
 # MAGIC %md
-# MAGIC ## Churn Prediction Feature Engineering
+# MAGIC # Streamlining ML Operations Using Databricks
 # MAGIC 
-# MAGIC <img src="https://github.com/RafiKurlansik/laughing-garbanzo/blob/main/step1.png?raw=true">
+# MAGIC ##Step 1 - Feature Engineering
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
+# MAGIC <img src="https://github.com/RafiKurlansik/laughing-garbanzo/blob/main/step1.png?raw=true" width="1400" height="2800">
 
 # COMMAND ----------
 
@@ -13,21 +19,26 @@
 
 # COMMAND ----------
 
-# DBTITLE 1,Read in Bronze Delta table using Spark
+# MAGIC %md
+# MAGIC ####Read Customer Churn Bronze Dataset from Data Lake into Dataframe
+
+# COMMAND ----------
+
 # Read into Spark
-telcoDF = spark.table("sr_ibm_telco_churn.bronze_customers")
+telcoDF = spark.table("telco_churn.bronze_customers")
 
 display(telcoDF)
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC Using `koalas` allows us to scale `pandas` code.
+# MAGIC ####Define Featurication Function
+# MAGIC 
+# MAGIC Using `koalas` allows us to scale `pandas` code.  
 
 # COMMAND ----------
 
-# DBTITLE 1,Define featurization function
-from databricks.feature_store import feature_table
+# DBTITLE 0,Define featurization function
 import databricks.koalas as ks
 
 def compute_churn_features(data):
@@ -60,7 +71,39 @@ def compute_churn_features(data):
 
 # COMMAND ----------
 
-# DBTITLE 1,Write features to the feature store
+# MAGIC %md
+# MAGIC ####Write Features to a Table
+
+# COMMAND ----------
+
+churn_features_df = compute_churn_features(telcoDF).to_spark()
+
+churn_features_df.write.format("delta").mode("overwrite").save("/home/usman.zubair@databricks.com/ibm-telco-churn/churn_features/")
+
+#Create Features Table
+_ = spark.sql("""
+    CREATE TABLE telco_churn.churn_features
+    USING DELTA
+    LOCATION '/home/usman.zubair@databricks.com/ibm-telco-churn/churn_features/'
+    """)
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC 
+# MAGIC SELECT * FROM telco_churn.churn_features
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ####Write Features to the Databricks Feature Store
+# MAGIC 
+# MAGIC The feature store allows other data scientists and ML engineers to discover what has already been computed for machine learning models reducing duplicative work and creating consistency between models.  
+
+# COMMAND ----------
+
+# DBTITLE 0,Write features to the feature store
+from databricks.feature_store import feature_table
 from databricks.feature_store import FeatureStoreClient
 
 fs = FeatureStoreClient()
@@ -68,14 +111,10 @@ fs = FeatureStoreClient()
 churn_features_df = compute_churn_features(telcoDF)
 
 churn_feature_table = fs.create_feature_table(
-  name='sr_ibm_telco_churn.churn_features',
+  name='telco_churn.churn_features_s',
   keys='customerID',
   schema=churn_features_df.spark.schema(),
-  description='These features are derived from the sr_ibm_telco_churn.bronze_customers table in the lakehouse.  I created dummy variables for the categorical columns, cleaned up their names, and added a boolean flag for whether the customer churned or not.  No aggregations were performed.'
+  description='These features are derived from the telco_churn.bronze_customers table in the lakehouse.  I created dummy variables for the categorical columns, cleaned up their names, and added a boolean flag for whether the customer churned or not.  No aggregations were performed.'
 )
 
-fs.write_table(df=churn_features_df.to_spark(), name='sr_ibm_telco_churn.churn_features', mode='overwrite')
-
-# COMMAND ----------
-
-
+fs.write_table(df=churn_features_df.to_spark(), name='telco_churn.churn_features_s', mode='overwrite')
