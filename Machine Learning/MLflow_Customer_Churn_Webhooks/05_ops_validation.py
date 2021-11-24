@@ -32,7 +32,7 @@ try:
   if 'to_stage' in registry_event and registry_event['to_stage'] != 'Staging':
     dbutils.notebook.exit()
 except Exception:
-  model_name = 'uz_telco_churn'
+  model_name = 'kd_telco_churn'
   model_version = "1"
 print(model_name, model_version)
 
@@ -51,7 +51,7 @@ run_info = client.get_run(run_id=model_details.run_id)
 # Features can be read from the feature store or another source
 data_source = run_info.data.tags['db_table']
 #features = fs.read_table(data_source)
-features = spark.table("telco_churn.churn_features").drop("customerID")
+features = spark.table("kd_telco_churn.churn_features").drop("customerID")
 
 
 # Load model as a Spark UDF

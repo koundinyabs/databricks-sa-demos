@@ -56,11 +56,11 @@ from mlflow.tracking import MlflowClient
 
 client = MlflowClient()
 
-run_id = '30b000161b7543f88a92ea27b343f723' # replace with your own run ID, etc
-model_name = "uz_telco_churn"
+run_id = '9a79786b0fb34cc48f2fd1c3f98273c1' # replace with your own run ID, etc
+model_name = "kd_telco_churn"
 model_uri = f"runs:/{run_id}/model"
 
-client.set_tag(run_id, key='db_table', value='telco_churn.churn_features')
+client.set_tag(run_id, key='db_table', value='kd_telco_churn.churn_features')
 client.set_tag(run_id, key='demographic_vars', value='seniorCitizen,gender_Female')
 
 model_details = mlflow.register_model(model_uri, model_name)
@@ -84,7 +84,7 @@ model_version_details = client.get_model_version(name=model_name, version=model_
 
 client.update_registered_model(
   name=model_details.name,
-  description="This model predicts whether a customer will churn using features from the telco_churn database.  It is used to update the Telco Churn Dashboard in DB SQL."
+  description="This model predicts whether a customer will churn using features from the telco_churn database.  It is used to update the Customer Churn Dashboard in DB SQL."
 )
 
 client.update_model_version(

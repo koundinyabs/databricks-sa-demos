@@ -32,22 +32,22 @@ display(telcoDF)
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ####Define Featurication Function
+# MAGIC ####Define Featurization Function
 # MAGIC 
-# MAGIC Using `koalas` allows us to scale `pandas` code.  
+# MAGIC Using `pyspark.pandas` allows us to scale `pandas` code.  
 
 # COMMAND ----------
 
 # DBTITLE 0,Define featurization function
-import databricks.koalas as ks
+import pyspark.pandas as pd
 
 def compute_churn_features(data):
   
   # Convert to koalas
-  data = data.to_koalas()
+  data = data.to_pandas_on_spark()
   
   # OHE
-  data = ks.get_dummies(data, 
+  data = pd.get_dummies(data, 
                         columns=['gender', 'partner', 'dependents',
                                  'phoneService', 'multipleLines', 'internetService',
                                  'onlineSecurity', 'onlineBackup', 'deviceProtection',
@@ -77,15 +77,17 @@ def compute_churn_features(data):
 # COMMAND ----------
 
 churn_features_df = compute_churn_features(telcoDF).to_spark()
+user = dbutils.notebook.entry_point.getDbutils().notebook().getContext().tags().apply('user')
+churn_features_path = '/home/{}/ibm-telco-churn/churn_features/'.format(user)
 
-churn_features_df.write.format("delta").mode("overwrite").save("/home/usman.zubair@databricks.com/ibm-telco-churn/churn_features/")
+churn_features_df.write.format("delta").mode("overwrite").save(churn_features_path)
 
 #Create Features Table
 _ = spark.sql("""
-    CREATE TABLE telco_churn.churn_features
+    CREATE TABLE kd_telco_churn.churn_features
     USING DELTA
-    LOCATION '/home/usman.zubair@databricks.com/ibm-telco-churn/churn_features/'
-    """)
+    LOCATION '{}'
+    """.format(churn_features_path))
 
 # COMMAND ----------
 
@@ -111,10 +113,10 @@ fs = FeatureStoreClient()
 churn_features_df = compute_churn_features(telcoDF)
 
 churn_feature_table = fs.create_feature_table(
-  name='telco_churn.churn_features_s',
+  name='kd_telco_churn.churn_features_s',
   keys='customerID',
   schema=churn_features_df.spark.schema(),
-  description='These features are derived from the telco_churn.bronze_customers table in the lakehouse.  I created dummy variables for the categorical columns, cleaned up their names, and added a boolean flag for whether the customer churned or not.  No aggregations were performed.'
+  description='These features are derived from the kd_telco_churn.bronze_customers table in the lakehouse.  I created dummy variables for the categorical columns, cleaned up their names, and added a boolean flag for whether the customer churned or not.  No aggregations were performed.'
 )
 
-fs.write_table(df=churn_features_df.to_spark(), name='telco_churn.churn_features_s', mode='overwrite')
+fs.write_table(df=churn_features_df.to_spark(), name='kd_telco_churn.churn_features_s', mode='overwrite')

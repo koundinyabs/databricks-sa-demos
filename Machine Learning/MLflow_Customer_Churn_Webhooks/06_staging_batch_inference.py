@@ -17,7 +17,7 @@ from databricks.feature_store import FeatureStoreClient
 import mlflow
 fs = FeatureStoreClient()
 
-model_name = dbutils.widgets.get("model_name")
+model_name = 'kd_telco_churn'
 model = mlflow.pyfunc.spark_udf(spark, model_uri="models:/{}/staging".format(model_name)) # may need to replace with your own model name
 
 # COMMAND ----------
@@ -30,7 +30,7 @@ model = mlflow.pyfunc.spark_udf(spark, model_uri="models:/{}/staging".format(mod
 from databricks.feature_store import FeatureStoreClient
 
 fs = FeatureStoreClient()
-features = fs.read_table('sr_ibm_telco_churn.churn_features')
+features = fs.read_table('kd_telco_churn.churn_features_s')
 
 # COMMAND ----------
 
@@ -49,4 +49,8 @@ display(predictions.select("customerId", "predictions"))
 
 # COMMAND ----------
 
-predictions.write.format("delta").mode("append").saveAsTable("sr_ibm_telco_churn.churn_preds")
+predictions.write.format("delta").mode("append").saveAsTable("kd_telco_churn.churn_preds")
+
+# COMMAND ----------
+
+

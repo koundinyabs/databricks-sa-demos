@@ -73,7 +73,7 @@ def mlflow_call_endpoint(endpoint, method, body='{}'):
 # COMMAND ----------
 
 # Which model in the registry will we create a webhook for?
-model_name = "uz_telco_churn"
+model_name = "kd_telco_churn"
 
 trigger_job = json.dumps({
   "model_name": model_name,
@@ -162,7 +162,7 @@ mlflow_call_endpoint("registry-webhooks/create", method = "POST", body = trigger
 # DBTITLE 1,List active webhooks
 import urllib 
 import json 
-model_name = "uz_telco_churn"
+model_name = "kd_telco_churn"
 list_model_webhooks = json.dumps({"model_name": model_name})
 
 mlflow_call_endpoint("registry-webhooks/list", method = "GET", body = list_model_webhooks)

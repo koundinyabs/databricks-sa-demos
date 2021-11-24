@@ -25,7 +25,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import accuracy_score
 
 # Read data
-data = spark.table("telco_churn.churn_features").toPandas().drop(["customerID"], axis=1)
+data = spark.table("kd_telco_churn.churn_features").toPandas().drop(["customerID"], axis=1)
 
 train, test = train_test_split(data, test_size=0.30, random_state=206)
 colLabel = 'churn'
@@ -66,7 +66,7 @@ mlflow.autolog(
 )
 
 # Set experiment
-mlflow.set_experiment("/Users/usman.zubair@databricks.com/telco_churn_experiment")
+mlflow.set_experiment("/Users/koundinya.srinivasarao@databricks.com/kd_telco_churn_experiment")
 
 # COMMAND ----------
 
